@@ -27,7 +27,7 @@ func main() {
 	}
 
 	http.HandleFunc("/", handleRoot)
-	http.HandleFunc("/statics/", statics)
+	http.HandleFunc("/static/", statics)
 
 	fmt.Println("Listening at", *httpAddr)
 	http.ListenAndServe(*httpAddr, nil)
@@ -38,6 +38,8 @@ func handleRoot(w http.ResponseWriter, r *http.Request) {
 	case "GET":
 		if r.URL.Path == "/" {
 			uploadTmpl.Execute(w, nil)
+		} else {
+			presentSlide(w, r)
 		}
 
 	case "POST":
