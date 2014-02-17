@@ -92,6 +92,8 @@ var shareTmpl = template.Must(template.New("share").Parse(`
 	<label for="presenterURL">Presenter URL:</label>
 	<input type="text" id="presenterURL" readonly="readonly" value="{{.baseURL}}/{{.slideId}}">
 	<p>
+	<label for="presenterURL">View URL:</label>
+	<input type="text" id="presenterURL" readonly="readonly" value="{{.baseURL}}/{{.viewId}}">
 	<script>
 		document.getElementById("presenterURL").focus();
 	</script>
@@ -104,9 +106,9 @@ func init() {
 }
 
 func processUpload(w http.ResponseWriter, r *http.Request) {
-	slideId := r.FormValue("existingId")
-	if slideId == "" {
-		slideId = generateKey()
+	slideId, viewId := getIdPair(r.FormValue("existingId"))
+	if slideId == "" || viewId == "" {
+		slideId, viewId = generateKey(), generateKey()
 	}
 
 	file, _, err := r.FormFile("slideArchive")
@@ -146,8 +148,12 @@ func processUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	addSlide(slideId, viewId)
+	saveIndex(filepath.Join(*slidesDir, "index.json"))
+
 	shareTmpl.Execute(w, map[string]string{
 		"slideId": slideId,
+		"viewId":  viewId,
 		"baseURL": *baseURL,
 	})
 

@@ -15,15 +15,9 @@ import (
 )
 
 func presentSlide(w http.ResponseWriter, r *http.Request) {
-	slideId := strings.SplitN(r.URL.Path, "/", 2)[1]
-	dirInfo, err := os.Stat(filepath.Join(*slidesDir, slideId))
-	if os.IsNotExist(err) || !dirInfo.IsDir() {
+	var slideId = getSlideId(strings.SplitN(r.URL.Path, "/", 2)[1])
+	if slideId == "" {
 		http.NotFound(w, r)
-		return
-	}
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 

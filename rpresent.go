@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -24,6 +25,10 @@ func main() {
 
 	if err := os.MkdirAll(*slidesDir, 0700); err != nil {
 		log.Fatalln("Failed to create slides directory:", err)
+	}
+
+	if err := loadIndex(filepath.Join(*slidesDir, "index.json")); err != nil {
+		log.Fatalln("Failed to load index:", err)
 	}
 
 	http.HandleFunc("/", handleRoot)
