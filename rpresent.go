@@ -8,10 +8,12 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 var (
@@ -30,6 +32,8 @@ func main() {
 	if err := loadIndex(filepath.Join(*slidesDir, "index.json")); err != nil {
 		log.Fatalln("Failed to load index:", err)
 	}
+
+	rand.Seed(time.Now().UnixNano())
 
 	http.HandleFunc("/", handleRoot)
 	http.HandleFunc("/static/", statics)
