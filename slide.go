@@ -6,6 +6,7 @@ package main
 
 import (
 	"html/template"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -62,6 +63,41 @@ func presentSlide(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+}
+
+func slideResource(w http.ResponseWriter, r *http.Request) {
+	parts := strings.SplitN(r.URL.Path, "/", 4)
+	if len(parts) != 4 {
+		http.NotFound(w, r)
+		return
+	}
+
+	slideId := index.getSlideId(parts[2])
+	resFile := filepath.Join(*slidesDir, slideId, parts[3])
+	info, err := os.Stat(resFile)
+	if os.IsNotExist(err) {
+		http.NotFound(w, r)
+		return
+	}
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if info.IsDir() {
+		http.Error(w, "403 Forbidden", http.StatusForbidden)
+		return
+	}
+
+	f, err := os.Open(resFile)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	defer f.Close()
+	io.Copy(w, f)
 }
 
 // Imported from https://code.google.com/p/go/source/browse/present/templates/slides.tmpl?repo=talks
@@ -170,7 +206,7 @@ It determines how the formatting actions are rendered.
 
 {{define "image"}}
 <div class="image">
-  <img src="{{.URL}}"{{with .Height}} height="{{.}}"{{end}}{{with .Width}} width="{{.}}"{{end}}>
+  <img src="res/{{rSlideId}}/{{.URL}}"{{with .Height}} height="{{.}}"{{end}}{{with .Width}} width="{{.}}"{{end}}>
 </div>
 {{end}}
 

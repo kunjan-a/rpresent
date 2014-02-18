@@ -7,13 +7,13 @@ package main
 import (
 	"flag"
 	"fmt"
+	"html/template"
 	"log"
 	"math/rand"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
-	"html/template"
 	"time"
 
 	"code.google.com/p/go.net/websocket"
@@ -41,6 +41,7 @@ func main() {
 	http.HandleFunc("/", handleRoot)
 	http.HandleFunc("/help", help)
 	http.HandleFunc("/static/", statics)
+	http.HandleFunc("/res/", slideResource)
 	http.Handle("/p", websocket.Handler(handlePresenter))
 	http.Handle("/v", websocket.Handler(handleViewer))
 
