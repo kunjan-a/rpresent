@@ -27,7 +27,7 @@ var (
 )
 
 func processUpload(w http.ResponseWriter, r *http.Request) {
-	slideId, viewId := getIdPair(r.FormValue("existingId"))
+	slideId, viewId := index.getIdPair(r.FormValue("existingId"))
 	if slideId == "" || viewId == "" {
 		slideId, viewId = generateKey(), generateKey()
 	}
@@ -69,8 +69,8 @@ func processUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	addSlide(slideId, viewId)
-	saveIndex(filepath.Join(*slidesDir, "index.json"))
+	index.addSlide(slideId, viewId)
+	index.save(filepath.Join(*slidesDir, "index.json"))
 
 	shareTmpl.Execute(w, map[string]string{
 		"slideId": slideId,

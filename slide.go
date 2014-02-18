@@ -16,7 +16,7 @@ import (
 
 func presentSlide(w http.ResponseWriter, r *http.Request) {
 	slideIdParam := strings.SplitN(r.URL.Path, "/", 2)[1]
-	slideId := getSlideId(slideIdParam)
+	slideId := index.getSlideId(slideIdParam)
 	if slideId == "" {
 		http.NotFound(w, r)
 		return

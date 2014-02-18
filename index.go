@@ -7,16 +7,18 @@ package main
 import (
 	"encoding/json"
 	"os"
-)
-import "sync"
-
-var (
-	indexMutex sync.RWMutex
-	slides     = make(map[string]string)
-	views      = make(map[string]string)
+	"sync"
 )
 
-func loadIndex(file string) error {
+var index = &slideIndex{slides: make(map[string]string), views: make(map[string]string)}
+
+type slideIndex struct {
+	sync.RWMutex
+	slides map[string]string
+	views  map[string]string
+}
+
+func (idx *slideIndex) load(file string) error {
 	f, err := os.Open(file)
 	if os.IsNotExist(err) {
 		return nil
@@ -27,25 +29,28 @@ func loadIndex(file string) error {
 
 	defer f.Close()
 
-	if err := json.NewDecoder(f).Decode(&slides); err != nil {
+	if err := json.NewDecoder(f).Decode(&idx.slides); err != nil {
 		return err
 	}
 
-	for k, v := range slides {
-		views[v] = k
+	for k, v := range idx.slides {
+		idx.views[v] = k
 	}
 	return nil
 }
 
-func addSlide(slideId, viewId string) {
-	indexMutex.Lock()
-	defer indexMutex.Unlock()
+func (idx *slideIndex) addSlide(slideId, viewId string) {
+	idx.Lock()
+	defer idx.Unlock()
 
-	slides[slideId] = viewId
-	views[viewId] = slideId
+	idx.slides[slideId] = viewId
+	idx.views[viewId] = slideId
 }
 
-func saveIndex(file string) error {
+func (idx *slideIndex) save(file string) error {
+	idx.Lock()
+	defer idx.Unlock()
+
 	f, err := os.Create(file)
 	if err != nil {
 		return err
@@ -53,29 +58,29 @@ func saveIndex(file string) error {
 
 	defer f.Close()
 
-	return json.NewEncoder(f).Encode(slides)
+	return json.NewEncoder(f).Encode(idx.slides)
 }
 
-func getSlideId(slideOrViewId string) string {
-	indexMutex.RLock()
-	defer indexMutex.RUnlock()
+func (idx *slideIndex) getSlideId(slideOrViewId string) string {
+	idx.RLock()
+	defer idx.RUnlock()
 
-	if slideId, ok := views[slideOrViewId]; ok {
+	if slideId, ok := idx.views[slideOrViewId]; ok {
 		return slideId
 	}
 
-	if _, ok := slides[slideOrViewId]; ok {
+	if _, ok := idx.slides[slideOrViewId]; ok {
 		return slideOrViewId
 	}
 
 	return ""
 }
 
-func getIdPair(slideIdParam string) (slideId, viewId string) {
-	indexMutex.RLock()
-	defer indexMutex.RUnlock()
+func (idx *slideIndex) getIdPair(slideIdParam string) (slideId, viewId string) {
+	idx.RLock()
+	defer idx.RUnlock()
 
-	if viewId, ok := slides[slideIdParam]; ok {
+	if viewId, ok := idx.slides[slideIdParam]; ok {
 		return slideIdParam, viewId
 	}
 	return "", ""

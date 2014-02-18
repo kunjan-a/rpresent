@@ -13,6 +13,81 @@ import (
 	"code.google.com/p/go.net/websocket"
 )
 
+var registry = &listenerRegistry{listeners: make(map[string][]*slideListener)}
+
+func handlePresenter(conn *websocket.Conn) {
+	conn.SetReadDeadline(time.Now().Add(10 * time.Second))
+	var slideIdParam string
+	if err := websocket.Message.Receive(conn, &slideIdParam); err != nil {
+		return
+	}
+
+	slideId, _ := index.getIdPair(slideIdParam)
+	if slideId == "" {
+		return
+	}
+
+	for {
+		var slide string
+
+		conn.SetDeadline(time.Now().Add(15 * time.Minute))
+		if err := websocket.Message.Receive(conn, &slide); err != nil {
+			return
+		}
+
+		curSlide, _ := strconv.Atoi(slide)
+		registry.setSlide(slideId, curSlide)
+	}
+}
+
+func handleViewer(conn *websocket.Conn) {
+	conn.SetReadDeadline(time.Now().Add(10 * time.Second))
+	var viewId string
+	if err := websocket.Message.Receive(conn, &viewId); err != nil {
+		return
+	}
+
+	slideId := index.getSlideId(viewId)
+	if slideId == "" {
+		return
+	}
+
+	listener := &slideListener{ch: make(chan int)}
+	registry.addListener(slideId, listener)
+
+	for {
+		slide := listener.get(1 * time.Minute)
+		if slide != 0 {
+			conn.SetDeadline(time.Now().Add(10 * time.Second))
+			if err := websocket.Message.Send(conn, fmt.Sprintf("%d", slide)); err != nil {
+				registry.removeListener(slideId, listener)
+				return
+			}
+
+			continue
+		}
+
+		if err := ping(conn); err != nil {
+			registry.removeListener(slideId, listener)
+			return
+		}
+	}
+}
+
+func ping(conn *websocket.Conn) error {
+	conn.SetDeadline(time.Now().Add(10 * time.Second))
+	if err := websocket.Message.Send(conn, "ping"); err != nil {
+		return err
+	}
+
+	var pong string
+	if err := websocket.Message.Receive(conn, &pong); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 type slideListener struct {
 	sync.Mutex
 	slide int
@@ -84,79 +159,4 @@ func (r *listenerRegistry) setSlide(slideId string, slide int) {
 	for _, listener := range r.listeners[slideId] {
 		listener.set(slide)
 	}
-}
-
-var registry = &listenerRegistry{listeners: make(map[string][]*slideListener)}
-
-func handlePresenter(conn *websocket.Conn) {
-	conn.SetReadDeadline(time.Now().Add(10 * time.Second))
-	var slideIdParam string
-	if err := websocket.Message.Receive(conn, &slideIdParam); err != nil {
-		return
-	}
-
-	slideId, _ := getIdPair(slideIdParam)
-	if slideId == "" {
-		return
-	}
-
-	for {
-		var slide string
-
-		conn.SetDeadline(time.Now().Add(15 * time.Minute))
-		if err := websocket.Message.Receive(conn, &slide); err != nil {
-			return
-		}
-
-		curSlide, _ := strconv.Atoi(slide)
-		registry.setSlide(slideId, curSlide)
-	}
-}
-
-func handleViewer(conn *websocket.Conn) {
-	conn.SetReadDeadline(time.Now().Add(10 * time.Second))
-	var viewId string
-	if err := websocket.Message.Receive(conn, &viewId); err != nil {
-		return
-	}
-
-	slideId := getSlideId(viewId)
-	if slideId == "" {
-		return
-	}
-
-	listener := &slideListener{ch: make(chan int)}
-	registry.addListener(slideId, listener)
-
-	for {
-		slide := listener.get(1 * time.Minute)
-		if slide != 0 {
-			conn.SetDeadline(time.Now().Add(10 * time.Second))
-			if err := websocket.Message.Send(conn, fmt.Sprintf("%d", slide)); err != nil {
-				registry.removeListener(slideId, listener)
-				return
-			}
-
-			continue
-		}
-
-		if err := ping(conn); err != nil {
-			registry.removeListener(slideId, listener)
-			return
-		}
-	}
-}
-
-func ping(conn *websocket.Conn) error {
-	conn.SetDeadline(time.Now().Add(10 * time.Second))
-	if err := websocket.Message.Send(conn, "ping"); err != nil {
-		return err
-	}
-
-	var pong string
-	if err := websocket.Message.Receive(conn, &pong); err != nil {
-		return err
-	}
-
-	return nil
 }

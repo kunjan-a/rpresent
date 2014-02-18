@@ -31,7 +31,7 @@ func main() {
 		log.Fatalln("Failed to create slides directory:", err)
 	}
 
-	if err := loadIndex(filepath.Join(*slidesDir, "index.json")); err != nil {
+	if err := index.load(filepath.Join(*slidesDir, "index.json")); err != nil {
 		log.Fatalln("Failed to load index:", err)
 	}
 
