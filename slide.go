@@ -15,7 +15,8 @@ import (
 )
 
 func presentSlide(w http.ResponseWriter, r *http.Request) {
-	var slideId = getSlideId(strings.SplitN(r.URL.Path, "/", 2)[1])
+	slideIdParam := strings.SplitN(r.URL.Path, "/", 2)[1]
+	slideId := getSlideId(slideIdParam)
 	if slideId == "" {
 		http.NotFound(w, r)
 		return
@@ -35,7 +36,17 @@ func presentSlide(w http.ResponseWriter, r *http.Request) {
 	}
 
 	tmpl := present.Template()
-	tmpl.Funcs(template.FuncMap{"playable": func(c present.Code) bool { return false }})
+	tmpl.Funcs(template.FuncMap{"playable": func(c present.Code) bool { return false },
+		"rSlideId": func() string {
+			return slideIdParam
+		},
+		"userRole": func() string {
+			if slideId == slideIdParam {
+				return "p"
+			} else {
+				return "v"
+			}
+		}})
 	_, err = tmpl.New("action").Parse(actionTmpl)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -63,7 +74,12 @@ const slidesTmpl = `
   <head>
     <title>{{.Title}}</title>
     <meta charset='utf-8'>
+	<script>
+	var rSlideId="{{rSlideId}}";
+	var userRole="{{userRole}}";
+	</script>
     <script src='/static/slides.js'></script>
+    <script src='/static/remote.js'></script>
   </head>
 
   <body style='display: none'>

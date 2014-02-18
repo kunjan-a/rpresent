@@ -14,6 +14,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"code.google.com/p/go.net/websocket"
 )
 
 var (
@@ -37,6 +39,8 @@ func main() {
 
 	http.HandleFunc("/", handleRoot)
 	http.HandleFunc("/static/", statics)
+	http.Handle("/p", websocket.Handler(handlePresenter))
+	http.Handle("/v", websocket.Handler(handleViewer))
 
 	fmt.Println("Listening at", *httpAddr)
 	http.ListenAndServe(*httpAddr, nil)
@@ -66,6 +70,9 @@ func statics(w http.ResponseWriter, r *http.Request) {
 	case "slides.js":
 		w.Header()["Content-Type"] = []string{"application/javascript"}
 		w.Write([]byte(slidesJS))
+	case "remote.js":
+		w.Header()["Content-Type"] = []string{"application/javascript"}
+		w.Write([]byte(remoteJS))
 	case "styles.css":
 		w.Header()["Content-Type"] = []string{"text/css"}
 		w.Write([]byte(stylesCSS))

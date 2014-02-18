@@ -200,6 +200,7 @@ function updateSlides() {
   enableSlideFrames(curSlide + 2);
 
   updateHash();
+  sendRemote(curSlide);
 };
 
 function prevSlide() {
