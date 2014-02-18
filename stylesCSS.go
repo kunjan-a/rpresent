@@ -29,6 +29,13 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+.helpLink {
+  display: block;
+  position: absolute;
+  right: 50px;
+  font-size: 8pt;
+}
+
 .slides {
   width: 100%;
   height: 100%;

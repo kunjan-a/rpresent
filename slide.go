@@ -87,6 +87,7 @@ const slidesTmpl = `
     <section class='slides layout-widescreen'>
 
       <article>
+	  	{{if eq userRole "v"}}<a class="helpLink" href="help" target="_blank">Help</a>{{end}}
         <h1>{{.Title}}</h1>
         {{with .Subtitle}}<h3>{{.}}</h3>{{end}}
         {{if not .Time.IsZero}}<h3>{{.Time.Format "2 January 2006"}}</h3>{{end}}
@@ -100,6 +101,7 @@ const slidesTmpl = `
   {{range $i, $s := .Sections}}
   <!-- start of slide {{$s.Number}} -->
       <article>
+	  {{if eq userRole "v"}}<a class="helpLink" href="help" target="_blank">Help</a>{{end}}
       {{if $s.Elem}}
         <h3>{{$s.Title}}</h3>
         {{range $s.Elem}}{{elem $.Template .}}{{end}}
@@ -111,6 +113,7 @@ const slidesTmpl = `
   {{end}}{{/* of Slide block */}}
 
       <article>
+	  	{{if eq userRole "v"}}<a class="helpLink" href="help" target="_blank">Help</a>{{end}}
         <h3>Thank you</h1>
         {{range .Authors}}
           <div class="presenter">
