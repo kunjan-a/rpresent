@@ -101,7 +101,7 @@ var helpTmpl = template.Must(template.New("share").Parse(`
 </head>
 <body>
 <h1>RPresent</h1>
-	RPresent is a remote presentation tool. The presenter will be able to remotely control the slide displayed ini your screen.
+	RPresent is a remote presentation tool. The presenter will be able to remotely control the slide displayed on your screen.
 	<p>
 	<h2>Keyboard Shortcuts</h2>
 	<ul>
